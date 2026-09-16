@@ -40,13 +40,13 @@ public class CourtsServiceImpl implements CourtsService {
     @Override
     public Courts readById(long id) {
         return courtRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurt s ID " + id + " nebyl nalezen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurt s ID " + id + " nebyl nalezen"));
     }
 
     @Override
     public Courts update(Long id, CourtCreateDto dto) {
         Courts existingCourt = courtRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurt nenalezen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurt nenalezen"));
 
         existingCourt.setName(dto.getName());
         existingCourt.setSurface(surfacesService.findSurface(dto.getSurfaceId()));
@@ -57,7 +57,7 @@ public class CourtsServiceImpl implements CourtsService {
     @Override
     public void delete(Long id) {
         Courts court = courtRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurt nenalezen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurt nenalezen"));
 
         boolean hasFutureReservations = reservationsRepository.existsByCourtIdAndStartTimeAfter(id, LocalDateTime.now());
         if (hasFutureReservations) {

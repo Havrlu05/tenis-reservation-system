@@ -34,6 +34,10 @@ public class CustomersRepository {
                 .findFirst();
     }
 
+    public List<Customers> findAll() {
+        return entityManager.createQuery("SELECT c FROM Customers c", Customers.class).getResultList();
+    }
+
 
 
 }

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,8 +18,8 @@ public class CustomersServiceImpl implements CustomersService {
     private CustomersRepository customersRepository;
 
     @Override
-    public Customers readCustomer(String phone){
-        return customersRepository.findByPhone(phone).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zákazník nenalezen"));
+    public Optional<Customers> readCustomer(String phone){
+        return customersRepository.findByPhone(phone);
     }
 
     @Override
@@ -29,5 +30,10 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public Customers save(Customers customers){
         return customersRepository.save(customers);
+    }
+
+    @Override
+    public List<Customers> findAll(){
+        return customersRepository.findAll();
     }
 }

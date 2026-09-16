@@ -33,7 +33,7 @@ public class ReservationsRepository {
 
     public boolean existsByCourtIdAndStartTimeAfter(Long courtId, LocalDateTime startTime) {
         Long count = entityManager.createQuery(
-                        "SELECT COUNT(r) FROM Reservations r WHERE r.courtId = :courtId AND r.startTime > :startTime AND r.isDeleted = false", Long.class)
+                        "SELECT COUNT(r) FROM Reservations r WHERE r.court.id = :courtId AND r.startTime > :startTime AND r.isDeleted = false", Long.class)
                 .setParameter("courtId", courtId)
                 .setParameter("startTime", startTime)
                 .getSingleResult();
@@ -73,13 +73,13 @@ public class ReservationsRepository {
 
     public List<Reservations> findByCourtId(Long courtId) {
         return entityManager.createQuery(
-                        "SELECT r FROM Reservations r WHERE r.courtId = :courtId ORDER BY r.createdAt DESC", Reservations.class)
+                        "SELECT r FROM Reservations r WHERE r.court.id = :courtId ORDER BY r.startTime DESC", Reservations.class)
                 .setParameter("courtId", courtId)
                 .getResultList();
     }
 
     public List<Reservations> findByCustomerPhoneAndOptionalFuture(String phone, boolean onlyFuture, LocalDateTime now) {
-        String jpql = "SELECT r FROM Reservations r WHERE r.customerPhone = :phone " +
+        String jpql = "SELECT r FROM Reservations r WHERE r.customer.phone = :phone " +
                 "AND (:onlyFuture = false OR r.startTime > :now) " +
                 "ORDER BY r.startTime ASC";
 
@@ -89,5 +89,5 @@ public class ReservationsRepository {
                 .setParameter("now", now)
                 .getResultList();
     }
-
 }
+

@@ -38,7 +38,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     public ReservationResponseDto create(ReservationCreateDto dto) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Uživatel nenalezen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uživatel nenalezen"));
 
         Courts court = courtsService.readById(dto.getCourtId());
 
@@ -46,11 +46,11 @@ public class ReservationsServiceImpl implements ReservationsService {
                 dto.getCourtId(), dto.getStart_time(), dto.getEnd_time()
         );
         if (isOverlapping) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "V tomto čase je kurt již obsazen jinou rezervací.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "V tomto čase je kurt již obsazen jinou rezervací.");
         }
 
 
-        Customers customer = customersService.getByUser(user)
+        Customers customer = customersService.readCustomer(dto.getCustomersPhone())
                 .orElseGet(() -> {
                     Customers newCustomer = new Customers();
                     newCustomer.setUser(user);
@@ -81,19 +81,20 @@ public class ReservationsServiceImpl implements ReservationsService {
         response.setPrice(totalPrice);
         response.setCustomerName(customer.getName());
         response.setIsDouble(savedReservation.getIsDoubles());
+        response.setCourt(court);
         return response;
     }
 
     @Override
     public Reservations read(Long id) {
         return reservationsRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rezervace nenalezena"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rezervace nenalezena"));
     }
     @Override
     @Transactional
     public Reservations update(Long id, ReservationCreateDto reservationCreateDto) {
         Reservations existingReservation = reservationsRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rezervace nenalezena"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rezervace nenalezena"));
 
         Long newCourtId = reservationCreateDto.getCourtId();
         LocalDateTime newStart = reservationCreateDto.getStart_time();
@@ -103,14 +104,20 @@ public class ReservationsServiceImpl implements ReservationsService {
                 newCourtId, newStart, newEnd, id
         );
         if (isOverlapping) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "V tomto čase je kurt již obsazen jinou rezervací.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "V tomto čase je kurt již obsazen jinou rezervací.");
         }
 
         existingReservation.setStartTime(newStart);
         existingReservation.setEndTime(newEnd);
         existingReservation.setCourt(courtsService.readById(newCourtId));
         existingReservation.setIsDoubles(reservationCreateDto.getIs_doubles());
-        existingReservation.setCustomer(customersService.readCustomer(reservationCreateDto.getCustomersPhone()));
+        existingReservation.setCustomer(customersService.readCustomer(reservationCreateDto.getCustomersPhone()).orElseGet(() -> {
+            Customers newCustomer = new Customers();
+            newCustomer.setUser(userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Uživatel nenalezen")));
+            newCustomer.setName(reservationCreateDto.getCustomersName());
+            newCustomer.setPhone(reservationCreateDto.getCustomersPhone());
+            return customersService.save(newCustomer);
+        }));
 
         return reservationsRepository.save(existingReservation);
     }
@@ -118,7 +125,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Override
     public void delete(Long id) {
         Reservations reservation = reservationsRepository
-                .findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rezervace nenalezena"));
+                .findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rezervace nenalezena"));
         reservation.setIsDeleted(true);
         reservationsRepository.save(reservation);
     }
