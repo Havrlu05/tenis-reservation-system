@@ -1,13 +1,16 @@
 package org.inqool.tenis_reservation_system.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.inqool.tenis_reservation_system.entities.Reservations;
 import org.inqool.tenis_reservation_system.rest.dto.ReservationCreateDto;
 import org.inqool.tenis_reservation_system.rest.dto.ReservationResponseDto;
+import org.inqool.tenis_reservation_system.services.JwtService;
 import org.inqool.tenis_reservation_system.services.ReservationsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -34,7 +37,13 @@ class ReservationControllerTest {
     @MockitoBean
     private ReservationsService reservationsService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     @WithMockUser(roles = "USER")
